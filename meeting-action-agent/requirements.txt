@@ -1,0 +1,7 @@
+streamlit>=1.28.0
+openai>=1.0.0
+# Selenium 仅本地「浏览器搜索」演示；Streamlit Cloud 会自动隐藏该功能
+selenium>=4.0.0
+webdriver-manager>=4.0.0
+python-docx>=0.8.11
+pdfplumber>=0.10.0

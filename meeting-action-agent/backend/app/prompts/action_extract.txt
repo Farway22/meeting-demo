@@ -1,0 +1,4 @@
+从以下会议文本中抽取明确的行动项。输出 JSON 数组，每项含 text、assignee（可选）、due（可选）。
+
+会议文本：
+{{ transcript }}

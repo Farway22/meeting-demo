@@ -1,0 +1,12 @@
+[server]
+# Disable the first-run "Email:" prompt so the app can start non-interactively.
+headless = true
+prompt = false
+maxUploadSize = 20
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+fastReruns = true
+
