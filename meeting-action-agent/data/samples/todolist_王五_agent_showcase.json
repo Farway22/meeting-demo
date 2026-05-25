@@ -1,0 +1,47 @@
+{
+  "王五": [
+    {
+      "task": "调研发票导出回归测试最佳实践，并生成可执行测试清单",
+      "task_id": "DEMO-AGENT-001",
+      "deadline": "演示现场 3 分钟内",
+      "priority": "high",
+      "priority_reason": "这个任务用于展示 OpenClaw Agent 能自主上网、整理资料、写入本地文件并回传结果，是比赛演示的关键亮点",
+      "task_level": "atomic",
+      "needs_decomposition": false,
+      "agent_showcase": true,
+      "agent_demo_goal": "OpenClaw Agent 自动打开浏览器搜索资料，整理发票导出回归测试清单，并写入本地 Markdown 报告",
+      "agent_demo_output": "~/.openclaw/workspace/meetingmind_demo/invoice_export_regression_showcase.html 和 invoice_export_regression_checklist.md",
+      "agent_demo_steps": [
+        "优先尝试使用 browser 工具打开搜索页；如果 browser 工具不可用，立刻用 exec 执行 /usr/bin/open 打开 Safari 搜索页",
+        "生成一个本地 HTML 展示页，模拟 Agent Research Board，包含搜索关键词、测试矩阵、风险雷达和产物路径",
+        "生成 Markdown 测试报告，包含权限、字段映射、边界数据、异常数据、性能和审计日志",
+        "用 /usr/bin/open 打开本地 HTML 报告，让评委看到浏览器窗口展示结果",
+        "返回已打开的页面、生成的文件路径和 5 条最值得展示的结论"
+      ],
+      "success_criteria": [
+        "Safari 或 Chromium 浏览器窗口被打开，评委能看到搜索页或本地展示页",
+        "本地生成 HTML 展示页和 Markdown 报告",
+        "输出中包含文件路径、测试矩阵摘要和下一步建议，不再显示“环境限制”"
+      ],
+      "agent_demo_prompt": "请开始比赛演示：先尝试打开浏览器搜索「发票导出 回归测试 用例 权限 字段 映射 CSV PDF Excel」。如果 browser 工具不可用，不要说环境限制，改用 exec 执行：/usr/bin/open \"https://www.google.com/search?q=发票导出+回归测试+用例+权限+字段映射+CSV+PDF+Excel\"。然后生成两份本地产物：1）Markdown 报告 ~/.openclaw/workspace/meetingmind_demo/invoice_export_regression_checklist.md，包含可执行测试矩阵、权限边界、字段映射、大数据量/空数据/特殊字符用例、审计日志和性能基准；2）HTML 展示页 ~/.openclaw/workspace/meetingmind_demo/invoice_export_regression_showcase.html，做成适合比赛展示的 Agent Research Board，包含“已打开搜索页”“风险雷达”“测试矩阵摘要”“三条口播亮点”。最后必须用 exec 执行 /usr/bin/open 打开这个 HTML 文件，让浏览器窗口展示结果。最后用简短中文返回：打开了什么、生成了什么、文件在哪里、三条亮点。"
+    },
+    {
+      "task": "执行发票导出回归测试并记录异常",
+      "task_id": "DEMO-QA-002",
+      "deadline": "演示后半段",
+      "priority": "high",
+      "priority_reason": "承接 Agent 生成的测试清单，展示从会议任务到实际执行的闭环",
+      "task_level": "atomic",
+      "needs_decomposition": false
+    },
+    {
+      "task": "汇总测试结论并生成上线风险说明",
+      "task_id": "DEMO-QA-003",
+      "deadline": "演示收尾",
+      "priority": "medium",
+      "priority_reason": "用于展示 MeetingMind 可以把执行结果沉淀为可交付文档",
+      "task_level": "atomic",
+      "needs_decomposition": false
+    }
+  ]
+}

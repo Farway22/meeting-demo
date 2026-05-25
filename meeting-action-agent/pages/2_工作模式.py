@@ -195,6 +195,18 @@ st.markdown(
     +f'</div>',
     unsafe_allow_html=True)
 
+if sel_task.get("agent_showcase"):
+    demo_goal = sel_task.get("agent_demo_goal") or "让 OpenClaw Agent 自动完成这项任务"
+    demo_output = sel_task.get("agent_demo_output") or "调研结果、文件路径和下一步建议"
+    st.markdown(
+        f'<div style="background:#0F172A;border:1px solid #1E293B;border-left:4px solid #38BDF8;'
+        f'padding:14px 18px;margin:-6px 0 16px;color:#E2E8F0;">'
+        f'<div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#38BDF8;margin-bottom:6px;">AGENT SHOWCASE</div>'
+        f'<div style="font-size:14px;font-weight:600;line-height:1.35;">{demo_goal}</div>'
+        f'<div style="font-size:12px;color:#94A3B8;margin-top:5px;">交付物：{demo_output}</div>'
+        f'</div>',
+        unsafe_allow_html=True)
+
 # Mode toggle（云端保留 UI，触发本地功能时在对话中提示）
 mode = st.radio("", ["💬 问答模式", "🤖 Agent 模式"], horizontal=True, key="work_mode", label_visibility="collapsed")
 st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
@@ -257,6 +269,10 @@ else:  # 🤖 Agent 模式
     import subprocess
     # Agent 目标配置
     agent_target = st.session_state.get("agent_target", "")
+    if not agent_target and sel_task.get("agent_showcase"):
+        st.session_state["agent_target"] = f"meeting-demo-{sel_task.get('task_id','showcase')}"
+        st.session_state["agent_target_flag"] = "--session-id"
+        agent_target = st.session_state["agent_target"]
     with st.expander("⚙ Agent 目标配置", expanded=not bool(agent_target)):
         st.markdown('<p style="font-size:12px;color:#78716C;margin-bottom:8px;">选择一种方式指定 OpenClaw 会话目标：</p>', unsafe_allow_html=True)
         target_mode = st.radio("", ["--to 手机号", "--agent 名称", "--session-id"], horizontal=True, key="agent_target_mode", label_visibility="collapsed")
@@ -273,9 +289,9 @@ else:  # 🤖 Agent 模式
     agent_flag   = st.session_state.get("agent_target_flag", "--to")
     def check_gateway():
         try:
-            r=subprocess.run(["openclaw","health"],capture_output=True,text=True,timeout=5)
+            r=subprocess.run(["openclaw","gateway","status"],capture_output=True,text=True,timeout=8)
             out=(r.stdout+r.stderr).strip()
-            return True,out
+            return (r.returncode == 0 and "Runtime: running" in out),out
         except subprocess.TimeoutExpired: return False,"Gateway 未响应（超时）"
         except Exception as e: return False,str(e)
     gw_ok,gw_msg=check_gateway()
@@ -293,23 +309,43 @@ else:  # 🤖 Agent 模式
         st.warning("请先在上方配置 Agent 目标（手机号 / Agent名称 / Session ID）")
     else:
         st.markdown(f'<div style="font-size:12px;color:#78716C;margin-bottom:10px;">目标：<code>{agent_flag} {agent_target}</code> · OpenClaw Agent 将在你的电脑上自主执行</div>',unsafe_allow_html=True)
-        agent_input=st.chat_input("向 OpenClaw Agent 发送指令...")
+        demo_prompt = sel_task.get("agent_demo_prompt", "")
+        demo_clicked = False
+        if demo_prompt:
+            demo_clicked = st.button("🚀 一键演示 Agent 自动执行", key=f"agent_demo_{sel_task.get('task_id','')}", use_container_width=True)
+        agent_input=demo_prompt if demo_clicked else st.chat_input("向 OpenClaw Agent 发送指令...")
         if agent_input:
             msgs.append({"role":"user","content":f"🤖 [Agent] {agent_input}"})
             if not CAN_RUN_LOCAL_FEATURES:
                 msgs.append({"role": "assistant", "content": local_deploy_hint("OpenClaw Agent")})
                 st.rerun()
-            task_ctx=f"当前任务：{sel_task.get('task','')}。截止：{sel_task.get('deadline','未定')}。"
-            full_msg=f"{task_ctx} 用户指令：{agent_input}"
+            showcase_ctx = {
+                "task": sel_task.get("task", ""),
+                "task_id": sel_task.get("task_id", ""),
+                "deadline": sel_task.get("deadline", "未定"),
+                "priority": sel_task.get("priority", ""),
+                "priority_reason": sel_task.get("priority_reason", ""),
+                "demo_goal": sel_task.get("agent_demo_goal", ""),
+                "demo_steps": sel_task.get("agent_demo_steps", []),
+                "expected_output": sel_task.get("agent_demo_output", ""),
+                "success_criteria": sel_task.get("success_criteria", []),
+            }
+            task_ctx=json.dumps({k:v for k,v in showcase_ctx.items() if v},ensure_ascii=False,indent=2)
+            full_msg=(
+                "你正在比赛现场演示 MeetingMind 的 Agent 模式。请优先制造可见的自动化过程："
+                "可以打开浏览器、搜索资料、读取/写入本地文件，并在最后返回清晰摘要、产物路径和已完成步骤。"
+                "如果 browser 工具不可用，必须使用 exec 调用 `/usr/bin/open` 打开 Safari 搜索页或本地 HTML 报告，"
+                "不要把浏览器步骤标记为环境限制；要给出可见的替代动作。"
+                f"\n\n任务上下文：\n{task_ctx}\n\n用户指令：{agent_input}"
+            )
             with st.spinner("OpenClaw Agent 执行中..."):
                 try:
                     result=subprocess.run(
                         ["openclaw","agent",agent_flag,agent_target,"--message",full_msg],
-                        capture_output=True,text=True,timeout=60
+                        capture_output=True,text=True,timeout=180
                     )
                     out=(result.stdout+result.stderr).strip()
                     reply=out if out else "（Agent 无输出，请检查 Gateway 状态）"
-                except subprocess.TimeoutExpired: reply="⏱ Agent 执行超时（60s），任务可能仍在后台运行。"
+                except subprocess.TimeoutExpired: reply="⏱ Agent 执行超时（180s），任务可能仍在后台运行。"
                 except Exception as e: reply=f"❌ 调用失败：{e}"
             msgs.append({"role":"assistant","content":reply}); st.rerun()
-

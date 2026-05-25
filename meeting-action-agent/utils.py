@@ -39,7 +39,9 @@ textarea:focus{border-color:#1A1917!important;box-shadow:none!important;}
 .stTabs [data-baseweb="tab"]{font-family:'Outfit',sans-serif!important;font-size:13px!important;font-weight:500!important;
   color:#78716C!important;padding:10px 22px!important;border:none!important;background:transparent!important;}
 .stTabs [aria-selected="true"]{color:#1A1917!important;border-bottom:2px solid #1A1917!important;}
-#MainMenu,footer,header{visibility:hidden;}
+footer{visibility:hidden;}
+/* 确保收起后的侧边栏展开箭头始终可见可点击 */
+[data-testid="collapsedControl"]{visibility:visible!important;opacity:1!important;display:flex!important;}
 </style>"""
 
 _PC = {"high":"#DC2626","medium":"#D97706","low":"#16A34A"}
